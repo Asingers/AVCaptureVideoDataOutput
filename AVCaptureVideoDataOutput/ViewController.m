@@ -62,15 +62,14 @@
     // 1秒あたり4回画像をキャプチャ
     videoConnection.videoMinFrameDuration = CMTimeMake(1, 30);
     
-
     // プレビュー設定
     previewImage = [[UIImageView alloc]initWithFrame:self.view.bounds];
     [self.view addSubview:previewImage];
+    [self.view sendSubviewToBack:previewImage]; // 背面に移動
     
     // セッション開始
     [session startRunning];
 }
-
 
 
 // デリゲートメソッド
@@ -144,5 +143,6 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
+
 
 @end

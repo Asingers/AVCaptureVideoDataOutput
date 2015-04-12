@@ -10,6 +10,7 @@
 #import <AVFoundation/AVFoundation.h>
 
 @interface ViewController : UIViewController<AVCaptureVideoDataOutputSampleBufferDelegate> // デリゲート設定
+- (IBAction)takeButton:(UIButton *)sender;
 
 
 @end
