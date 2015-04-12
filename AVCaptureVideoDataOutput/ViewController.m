@@ -12,7 +12,12 @@
 {
     AVCaptureSession* session;
     AVCaptureVideoDataOutput * videoDataOutput;
+    UIImage * image;
     UIImageView * previewImage;
+    NSMutableArray * images;
+    NSTimer * timer;
+    int count;
+    BOOL buttonStatus;
 }
 
 @end
@@ -23,6 +28,7 @@
 {
     [super viewDidLoad];
     
+    // カメラセットアップ
     [self AVCaptureSetup];
     
 }
@@ -69,6 +75,10 @@
     
     // セッション開始
     [session startRunning];
+    
+    // 変数初期化
+    images = [NSMutableArray array]; //NSMutableArray初期化
+    buttonStatus = NO;
 }
 
 
@@ -78,10 +88,11 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
        fromConnection:(AVCaptureConnection *)connection
 {
     // キャプチャしたフレームからCGImageを作成
-    UIImage *image = [self imageFromSampleBuffer:sampleBuffer];
+    image = [self imageFromSampleBuffer:sampleBuffer];
     
     // 画像を画面に表示
-    dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_async(dispatch_get_main_queue(), ^
+    {
         previewImage.image = image;
     });
 }
@@ -119,11 +130,11 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     CGColorSpaceRelease(colorSpace);
     CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
     
-    UIImage *image = [UIImage imageWithCGImage:cgImage scale:1.0 orientation:UIImageOrientationRight];
+    UIImage *uiImage = [UIImage imageWithCGImage:cgImage scale:1.0 orientation:UIImageOrientationRight];
     
     CGImageRelease(cgImage);
     
-    return image;
+    return uiImage;
 }
 
 
@@ -131,12 +142,84 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 // 撮影ボタンメソッド
 - (IBAction)takeButton:(UIButton *)sender
 {
-    
     // アルバムに画像を保存
-    UIImageWriteToSavedPhotosAlbum(previewImage.image, self, nil, nil);
+    //UIImageWriteToSavedPhotosAlbum(previewImage.image, self, nil, nil);
+    
+    // 撮影開始
+    if(buttonStatus == NO)
+    {
+        buttonStatus = YES;
+        [self timerStart];
+    } else{
+        buttonStatus = NO;
+        
+        // タイマー停止
+        [timer invalidate];
+        
+        // Blurを表示
+        [self blurViewSet];
+    }
 }
 
 
+// タイマーを作成してスタート
+-(void)timerStart
+{
+    timer = [NSTimer scheduledTimerWithTimeInterval:1
+                                              target:self
+                                            selector:@selector(takePhoto:)
+                                            userInfo:nil
+                                             repeats:YES];
+    count = 0;
+}
+
+
+-(IBAction)takePhoto:(id)Sender
+{
+    // 画像をArrayに保存
+    [images addObject:image];
+    
+    // カウントアップ
+    count = count+1;
+    _countLabel.text = [NSString stringWithFormat:@"%d", count];
+}
+
+
+// Blur生成メソッド
+-(void)blurViewSet
+{
+    // 元画像生成
+    UIImageView * blurImage = [[UIImageView alloc]initWithFrame:self.view.bounds];
+    blurImage.image = image;
+    [self.view addSubview:blurImage];
+    
+    //ブラースタイルの決定
+    UIVisualEffect * blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleLight];
+    
+    //VisualEffectViewにVisualEffectを設定
+    UIVisualEffectView *effectView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
+    
+    //VisualEffectViewを_blurViewと同じサイズに設定
+    effectView.frame = blurImage.bounds;
+    
+    // blurViewにVisualEffectViewを追加
+    [blurImage addSubview:effectView];
+    
+    // ローディングを表示
+    [self loadingSet];
+}
+
+
+// ローディング生成メソッド
+-(void)loadingSet
+{
+    UIActivityIndicatorView *indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+
+    [self.view addSubview:indicator];
+    //[self.view bringSubviewToFront:indicator];
+    indicator.frame = CGRectMake(self.view.bounds.size.width/2 - 10, self.view.bounds.size.height/2 -10, 20, 20);
+    [indicator startAnimating];
+}
 
 
 - (void)didReceiveMemoryWarning {

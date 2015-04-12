@@ -25,13 +25,24 @@
                                     <action selector="takeButton:" destination="vXZ-lx-hvc" eventType="touchUpInside" id="zDI-gl-7Rx"/>
                                 </connections>
                             </button>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="nvb-hY-i7s">
+                                <rect key="frame" x="279" y="545" width="42" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                                <color key="textColor" cocoaTouchSystemColor="darkTextColor"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="calibratedWhite"/>
                         <constraints>
                             <constraint firstAttribute="bottom" secondItem="WjK-HT-Zja" secondAttribute="bottom" constant="84" id="9L8-Eh-glz"/>
+                            <constraint firstAttribute="centerX" secondItem="nvb-hY-i7s" secondAttribute="centerX" id="azL-kS-W0u"/>
                             <constraint firstAttribute="centerX" secondItem="WjK-HT-Zja" secondAttribute="centerX" id="bEt-R8-deR"/>
+                            <constraint firstAttribute="bottom" secondItem="nvb-hY-i7s" secondAttribute="bottom" constant="34" id="tqc-hv-deO"/>
                         </constraints>
                     </view>
+                    <connections>
+                        <outlet property="countLabel" destination="nvb-hY-i7s" id="1hN-me-eVx"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="x5A-6p-PRh" sceneMemberID="firstResponder"/>
             </objects>

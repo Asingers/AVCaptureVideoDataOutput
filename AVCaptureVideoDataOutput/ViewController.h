@@ -11,6 +11,7 @@
 
 @interface ViewController : UIViewController<AVCaptureVideoDataOutputSampleBufferDelegate> // デリゲート設定
 - (IBAction)takeButton:(UIButton *)sender;
+@property (weak, nonatomic) IBOutlet UILabel *countLabel;
 
 
 @end
