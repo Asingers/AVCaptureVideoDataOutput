@@ -233,6 +233,13 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 }
 
 
+// 前ページに戻るためのメソッド
+-(IBAction)goback:(UIStoryboardSegue *)mySegue
+{
+    
+}
+
+
 // 画面回転固定
 - (BOOL)shouldAutorotate
 {
@@ -240,10 +247,6 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 }
 
 
-- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
-{
-    return false;
-}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
