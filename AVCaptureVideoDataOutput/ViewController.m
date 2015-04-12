@@ -18,6 +18,7 @@
     NSTimer * timer;
     int count;
     BOOL buttonStatus;
+    BOOL takephotoPortrait, portrait;
 }
 
 @end
@@ -30,7 +31,7 @@
     
     // カメラセットアップ
     [self AVCaptureSetup];
-    
+
 }
 
 
@@ -79,6 +80,7 @@
     // 変数初期化
     images = [NSMutableArray array]; //NSMutableArray初期化
     buttonStatus = NO;
+    takephotoPortrait = NO;
 }
 
 
@@ -158,9 +160,33 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
         
         // サムネイルページに遷移
         [self performSegueWithIdentifier:@"mySegue" sender:self];
+        
+        // 撮影時の端末の向きを確認
+        UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
+        
+        if(portrait == YES )
+        {
+            takephotoPortrait = YES ;
+        }else{
+            takephotoPortrait = NO;
+        }
     }
 }
 
+
+// 端末回転ステータス取得
+-(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)FromInterfaceOrientation
+{
+    if(FromInterfaceOrientation == UIInterfaceOrientationPortrait)
+    {
+        // 横向き
+        portrait = NO;
+    } else {
+        // 縦向き
+        portrait = YES;
+    }
+    NSLog(@"portrait:%d",portrait);
+}
 
 // タイマーを作成してスタート
 -(void)timerStart
@@ -229,6 +255,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     {
         SecondViewController *viewCon = segue.destinationViewController;
         viewCon.images = images;
+        viewCon.takephotoPortrait = takephotoPortrait;
     }
 }
 
@@ -239,12 +266,13 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     
 }
 
-
+/*
 // 画面回転固定
 - (BOOL)shouldAutorotate
 {
     return NO; // or NO
 }
+ */
 
 
 
