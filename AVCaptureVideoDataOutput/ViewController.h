@@ -8,10 +8,13 @@
 
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
+#import "SecondViewController.h" //SecondViewControllerをインポート
 
 @interface ViewController : UIViewController<AVCaptureVideoDataOutputSampleBufferDelegate> // デリゲート設定
 - (IBAction)takeButton:(UIButton *)sender;
 @property (weak, nonatomic) IBOutlet UILabel *countLabel;
+- (IBAction)goback:(UIStoryboardSegue*)mySegue; // SecondViewControllerから戻るためのメソッド
+@property (weak, nonatomic) IBOutlet UIImageView *imageView;
 
 
 @end

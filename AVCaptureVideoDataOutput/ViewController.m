@@ -93,7 +93,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     // 画像を画面に表示
     dispatch_async(dispatch_get_main_queue(), ^
     {
-        previewImage.image = image;
+        _imageView.image = image;
     });
 }
 
@@ -156,8 +156,8 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
         // タイマー停止
         [timer invalidate];
         
-        // Blurを表示
-        [self blurViewSet];
+        // サムネイルページに遷移
+        [self performSegueWithIdentifier:@"mySegue" sender:self];
     }
 }
 
@@ -221,6 +221,29 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     [indicator startAnimating];
 }
 
+
+// 画面遷移が行われる度に呼び出されるメソッド
+- (void) prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    if ([segue.identifier isEqualToString:@"mySegue"])
+    {
+        SecondViewController *viewCon = segue.destinationViewController;
+        viewCon.images = images;
+    }
+}
+
+
+// 画面回転固定
+- (BOOL)shouldAutorotate
+{
+    return NO; // or NO
+}
+
+
+- (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
+{
+    return false;
+}
 
 - (void)didReceiveMemoryWarning {
     [super didReceiveMemoryWarning];
