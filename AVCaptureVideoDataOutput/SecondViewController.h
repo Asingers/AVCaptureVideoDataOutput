@@ -11,7 +11,9 @@
 @interface SecondViewController : UIViewController<UIScrollViewDelegate> // デリゲート設定
 
 @property (nonatomic) NSMutableArray* images; // 前画面から引き継ぐ値の格納先
+@property (nonatomic) NSMutableArray* images2; // 前画面から引き継ぐ値の格納先
 @property (nonatomic) BOOL takephotoOrientation; // 前画面から引き継ぐ値の格納先
+
 
 @property (weak, nonatomic) IBOutlet UILabel *indexLabel;
 @property (weak, nonatomic) IBOutlet UIBarButtonItem *saveButton;

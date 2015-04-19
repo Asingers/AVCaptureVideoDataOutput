@@ -12,7 +12,6 @@
 {
     UIScrollView * scrollView;
     UIPageControl * pageControl;
-    NSMutableArray * images2;
     NSString * currentPage;
     int angle;
     int width, height;
@@ -27,6 +26,8 @@
     [self slideSet];
 
     NSLog(@"_images:%d",[_images count]);
+    NSLog(@"_images2:%d",[_images2 count]);
+    
 }
 
 
@@ -34,7 +35,7 @@
 - (void)slideSet
 {
     // NSMutableArrya初期化
-    images2 = [[NSMutableArray alloc]init];
+    //images2 = [[NSMutableArray alloc]init];
     
     // 既存のスクロールビューを削除
     [scrollView removeFromSuperview];
@@ -42,28 +43,11 @@
     //最適なアングル、画像サイズを取得
     [self getAngleSize];
     
-    
-    // 画像を回転リサイズしてarrayに挿入
-    for(int i = 0; i < [_images count]; i++)
-    {
-        // imageViewを生成
-        UIImageView* imageView =[[UIImageView alloc]init];
-        
-        // 画像を回転リサイズ
-        imageView.image = [self rotateImage:_images[i] angle:angle];
-        //imageView.image = _images[i];
-        
-        // 画像をリサイズ位置変更
-        imageView.frame = CGRectMake(width*i, 0, width, height);
-
-        [images2 addObject:imageView];
-    }
-    
     // UIScrollView生成
     scrollView = [[UIScrollView alloc]init];
     scrollView.frame = CGRectMake(0,0,width,height); // サイズ指定
     
-    [scrollView setContentSize:CGSizeMake(([images2 count] * width), height)]; // スクロールの範囲を設定
+    [scrollView setContentSize:CGSizeMake(([_images2 count] * width), height)]; // スクロールの範囲を設定
     
     scrollView.showsHorizontalScrollIndicator = NO; // 横スクロールのインジケータを非表示にする
     
@@ -79,9 +63,9 @@
     //[self.view sendSubviewToBack:scrollView]; // 最背面に移動
     
     // スクロールビューに画像貼り付け
-    for (int i = 0; i < [images2 count]; i++)
+    for (int i = 0; i < [_images2 count]; i++)
     {
-        [scrollView addSubview:images2[i]];
+        [scrollView addSubview:_images2[i]];
     }
     
     // indexLabelの初期値設定
@@ -90,7 +74,7 @@
                         stringByAppendingString:
                         [
                          @" / " stringByAppendingString:
-                         [NSString stringWithFormat:@"%d",[images2 count]]
+                         [NSString stringWithFormat:@"%d",[_images2 count]]
                          ]
                         ];
 }
@@ -110,7 +94,7 @@
                        stringByAppendingString:
                        [
                         @" / " stringByAppendingString:
-                        [NSString stringWithFormat:@"%d",[images2 count]]
+                        [NSString stringWithFormat:@"%d",[_images2 count]]
                         ]
                        ]
         ;

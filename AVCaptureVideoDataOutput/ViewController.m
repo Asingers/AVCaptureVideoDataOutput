@@ -13,12 +13,19 @@
     AVCaptureSession* session;
     AVCaptureVideoDataOutput * videoDataOutput;
     UIImage * image;
-    UIImageView * imageView;
+    UIImageView * preView;
     NSMutableArray * images;
     NSTimer * timer;
     int count;
     BOOL buttonStatus;
     BOOL takephotoOrientation;
+    
+    UIScrollView * scrollView;
+    UIPageControl * pageControl;
+    NSMutableArray * images2;
+    NSString * currentPage;
+    int imageAngle;
+    int imageWidth, imageHeight;
 }
 
 @end
@@ -68,16 +75,18 @@
     
     // 変数初期化
     images = [NSMutableArray array]; //NSMutableArray初期化
+    images2 = [NSMutableArray array];
+    
     buttonStatus = NO;
     
     // プレビュー画面生成
-    imageView = [[UIImageView alloc]initWithFrame:(CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height))];
+    preView = [[UIImageView alloc]initWithFrame:(CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height))];
     
     // プレビューを画面に貼り付け
-    [self.view addSubview:imageView];
+    [self.view addSubview:preView];
     
     // 背面に移動
-    [self.view sendSubviewToBack:imageView];
+    [self.view sendSubviewToBack:preView];
 }
 
 
@@ -92,7 +101,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     // 画像を画面に表示
     dispatch_async(dispatch_get_main_queue(), ^
     {
-        imageView.image = image;
+        preView.image = image;
     });
 }
 
@@ -171,6 +180,10 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 // タイマーを作成してスタート
 -(void)timerStart
 {
+    //
+    
+    
+    // タイマー設定
     timer = [NSTimer scheduledTimerWithTimeInterval:1
                                               target:self
                                             selector:@selector(takePhoto:)
@@ -183,7 +196,18 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 -(IBAction)takePhoto:(id)Sender
 {
     // 画像をArrayに保存
-    [images addObject:image];
+    //[images addObject:image];
+    
+    // 画像をリサイズ
+    //[self imagesResizeRotation];
+    
+    NSOperationQueue *queue = [[NSOperationQueue alloc] init];
+    
+    [queue addOperationWithBlock:^{
+        [self imageResizeRotation:image myCount:count];
+    }];
+    
+    
     
     // カウントアップ
     count = count+1;
@@ -191,40 +215,124 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 }
 
 
-// Blur生成メソッド
--(void)blurViewSet
+//スライド用に画像をリサイズ及び回転するメソッド
+- (void)imagesResizeRotation
 {
-    // 元画像生成
-    UIImageView * blurImage = [[UIImageView alloc]initWithFrame:self.view.bounds];
-    blurImage.image = image;
-    [self.view addSubview:blurImage];
+    // NSMutableArrya初期化
+    images2 = [[NSMutableArray alloc]init];
     
-    //ブラースタイルの決定
-    UIVisualEffect * blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleLight];
+    //最適なアングル、画像サイズを取得
+    [self getAngleSize];
     
-    //VisualEffectViewにVisualEffectを設定
-    UIVisualEffectView *effectView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
-    
-    //VisualEffectViewを_blurViewと同じサイズに設定
-    effectView.frame = blurImage.bounds;
-    
-    // blurViewにVisualEffectViewを追加
-    [blurImage addSubview:effectView];
-    
-    // ローディングを表示
-    [self loadingSet];
+    // 画像を回転リサイズしてarrayに挿入
+    for(int i = 0; i < [images count]; i++)
+    {
+        // imageViewを生成
+        UIImageView* previewImage =[[UIImageView alloc]init];
+        
+        // 画像を回転リサイズ
+        previewImage.image = [self rotateImage:images[i] angle:imageAngle];
+        
+        // 画像をリサイズ位置変更
+        previewImage.frame = CGRectMake(imageWidth*i, 0, imageWidth, imageHeight);
+        
+        [images2 addObject:previewImage];
+    }
 }
 
 
-// ローディング生成メソッド
--(void)loadingSet
+//スライド用に画像をリサイズ及び回転するメソッド
+- (void)imageResizeRotation:(UIImage*)myImage myCount:(int)myCount
 {
-    UIActivityIndicatorView *indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+    //最適なアングル、画像サイズを取得
+    [self getAngleSize];
 
-    [self.view addSubview:indicator];
-    //[self.view bringSubviewToFront:indicator];
-    indicator.frame = CGRectMake(self.view.bounds.size.width/2 - 10, self.view.bounds.size.height/2 -10, 20, 20);
-    [indicator startAnimating];
+    // imageViewを生成
+    UIImageView* previewImage =[[UIImageView alloc]init];
+    
+    // 画像を回転リサイズ
+    previewImage.image = [self rotateImage:myImage angle:imageAngle];
+    
+    // 画像をリサイズ位置変更
+    previewImage.frame = CGRectMake(imageWidth * myCount, 0, imageWidth, imageHeight);
+    
+    [images2 addObject:previewImage];
+}
+
+
+
+// 最適なアングルサイズ取得メソッド
+- (void)getAngleSize
+{
+    switch (takephotoOrientation)
+    {
+            
+        case UIDeviceOrientationPortrait:
+            // iPhoneを縦にして、ホームボタンが下にある状態
+            imageAngle =  360;
+            imageWidth = self.view.bounds.size.width;
+            imageHeight = self.view.bounds.size.height;
+            break;
+            
+        case UIDeviceOrientationPortraitUpsideDown:
+            // iPhoneを縦にして、ホームボタンが上にある状態
+            break;
+            
+        case UIDeviceOrientationLandscapeLeft:
+            // iPhoneを横にして、ホームボタンが右にある状態
+            imageAngle = 0;
+            imageWidth = self.view.bounds.size.height;
+            imageHeight = self.view.bounds.size.width;
+            break;
+            
+        case UIDeviceOrientationLandscapeRight:
+            // iPhoneを横にして、ホームボタンが左にある状態
+            imageAngle = 180;
+            imageWidth = self.view.bounds.size.height;
+            imageHeight = self.view.bounds.size.width;
+            break;
+            
+        case UIDeviceOrientationFaceUp:
+            // iPhoneの液晶面を天に向けた状態
+            break;
+            
+        case UIDeviceOrientationFaceDown:
+            // iPhoneの液晶面を地に向けた状態
+            break;
+            
+        case UIDeviceOrientationUnknown:
+        default:
+            // 向きが分からない状態
+            break;
+    }
+}
+
+
+    
+// 画像回転メソッド
+- (UIImage*)rotateImage:(UIImage*)myImage angle:(int)myAngle
+{
+    if(myAngle != 360)
+    {
+        CGSize imgSize = {myImage.size.width, image.size.height};
+        UIGraphicsBeginImageContext(imgSize);
+        CGContextRef context = UIGraphicsGetCurrentContext();
+        CGContextTranslateCTM(context, myImage.size.width/2, myImage.size.height/2); // 回転の中心点を移動
+        CGContextScaleCTM(context, 1.0, -1.0); // Y軸方向を補正
+        
+        float radian = myAngle * M_PI / 180; // 45°回転させたい場合
+        CGContextRotateCTM(context, radian);
+        CGContextDrawImage(UIGraphicsGetCurrentContext(), CGRectMake(-myImage.size.width/2, -myImage.size.height/2, myImage.size.width, myImage.size.height), myImage.CGImage);
+        
+        UIImage *rotatedImage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        
+        // UIImageViewに回転後の画像を設定
+        
+        return rotatedImage;
+    }else{
+        return  myImage;
+    }
 }
 
 
@@ -237,6 +345,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     {
         SecondViewController *viewCon = segue.destinationViewController;
         viewCon.images = images;
+        viewCon.images2 = images2;
         viewCon.takephotoOrientation = takephotoOrientation;
     }
 }
@@ -247,6 +356,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 {
     // imagesを初期化
     [images removeAllObjects];
+    [images2 removeAllObjects];
     
     // countを初期化
     _countLabel.text = @" ";
