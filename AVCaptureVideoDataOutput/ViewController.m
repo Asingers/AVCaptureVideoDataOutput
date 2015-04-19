@@ -184,7 +184,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     
     
     // タイマー設定
-    timer = [NSTimer scheduledTimerWithTimeInterval:1
+    timer = [NSTimer scheduledTimerWithTimeInterval:0.5
                                               target:self
                                             selector:@selector(takePhoto:)
                                             userInfo:nil
@@ -195,49 +195,12 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 
 -(IBAction)takePhoto:(id)Sender
 {
-    // 画像をArrayに保存
-    //[images addObject:image];
-    
-    // 画像をリサイズ
-    //[self imagesResizeRotation];
-    
-    NSOperationQueue *queue = [[NSOperationQueue alloc] init];
-    
-    [queue addOperationWithBlock:^{
-        [self imageResizeRotation:image myCount:count];
-    }];
-    
-    
+    // 画像を加工してArrayに挿入
+    [self imageResizeRotation:image myCount:count];
     
     // カウントアップ
     count = count+1;
     _countLabel.text = [NSString stringWithFormat:@"%d", count];
-}
-
-
-//スライド用に画像をリサイズ及び回転するメソッド
-- (void)imagesResizeRotation
-{
-    // NSMutableArrya初期化
-    images2 = [[NSMutableArray alloc]init];
-    
-    //最適なアングル、画像サイズを取得
-    [self getAngleSize];
-    
-    // 画像を回転リサイズしてarrayに挿入
-    for(int i = 0; i < [images count]; i++)
-    {
-        // imageViewを生成
-        UIImageView* previewImage =[[UIImageView alloc]init];
-        
-        // 画像を回転リサイズ
-        previewImage.image = [self rotateImage:images[i] angle:imageAngle];
-        
-        // 画像をリサイズ位置変更
-        previewImage.frame = CGRectMake(imageWidth*i, 0, imageWidth, imageHeight);
-        
-        [images2 addObject:previewImage];
-    }
 }
 
 
