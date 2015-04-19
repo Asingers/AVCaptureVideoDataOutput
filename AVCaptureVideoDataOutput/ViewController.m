@@ -13,12 +13,12 @@
     AVCaptureSession* session;
     AVCaptureVideoDataOutput * videoDataOutput;
     UIImage * image;
-    UIImageView * previewImage;
+    UIImageView * imageView;
     NSMutableArray * images;
     NSTimer * timer;
     int count;
     BOOL buttonStatus;
-    BOOL takephotoPortrait, portrait;
+    BOOL takephotoOrientation;
 }
 
 @end
@@ -31,7 +31,7 @@
     
     // カメラセットアップ
     [self AVCaptureSetup];
-
+    
 }
 
 
@@ -63,24 +63,21 @@
                                            (id)kCVPixelBufferPixelFormatTypeKey : [NSNumber numberWithInt:kCVPixelFormatType_32BGRA]
                                            };
     
-    // ビデオ入力のAVCaptureConnectionを取得
-    AVCaptureConnection *videoConnection = [videoDataOutput connectionWithMediaType:AVMediaTypeVideo];
-    
-    // 1秒あたり4回画像をキャプチャ
-    videoConnection.videoMinFrameDuration = CMTimeMake(1, 30);
-    
-    // プレビュー設定
-    previewImage = [[UIImageView alloc]initWithFrame:self.view.bounds];
-    [self.view addSubview:previewImage];
-    [self.view sendSubviewToBack:previewImage]; // 背面に移動
-    
     // セッション開始
     [session startRunning];
     
     // 変数初期化
     images = [NSMutableArray array]; //NSMutableArray初期化
     buttonStatus = NO;
-    takephotoPortrait = NO;
+    
+    // プレビュー画面生成
+    imageView = [[UIImageView alloc]initWithFrame:(CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height))];
+    
+    // プレビューを画面に貼り付け
+    [self.view addSubview:imageView];
+    
+    // 背面に移動
+    [self.view sendSubviewToBack:imageView];
 }
 
 
@@ -95,7 +92,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     // 画像を画面に表示
     dispatch_async(dispatch_get_main_queue(), ^
     {
-        _imageView.image = image;
+        imageView.image = image;
     });
 }
 
@@ -147,12 +144,19 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     // アルバムに画像を保存
     //UIImageWriteToSavedPhotosAlbum(previewImage.image, self, nil, nil);
     
-    // 撮影開始
+    // 撮影停止中の場合、撮影開始
     if(buttonStatus == NO)
     {
         buttonStatus = YES;
         [self timerStart];
-    } else{
+        
+        // 撮影時の端末の向きを確認
+        UIDeviceOrientation orientation = [[UIDevice currentDevice] orientation];
+        takephotoOrientation = orientation;
+        NSLog(@"takephotoOrientation:%d",orientation);
+        
+    // 撮影中の場合、撮影停止
+    }else{
         buttonStatus = NO;
         
         // タイマー停止
@@ -160,33 +164,9 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
         
         // サムネイルページに遷移
         [self performSegueWithIdentifier:@"mySegue" sender:self];
-        
-        // 撮影時の端末の向きを確認
-        UIInterfaceOrientation orientation = [UIApplication sharedApplication].statusBarOrientation;
-        
-        if(portrait == YES )
-        {
-            takephotoPortrait = YES ;
-        }else{
-            takephotoPortrait = NO;
-        }
     }
 }
 
-
-// 端末回転ステータス取得
--(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)FromInterfaceOrientation
-{
-    if(FromInterfaceOrientation == UIInterfaceOrientationPortrait)
-    {
-        // 横向き
-        portrait = NO;
-    } else {
-        // 縦向き
-        portrait = YES;
-    }
-    NSLog(@"portrait:%d",portrait);
-}
 
 // タイマーを作成してスタート
 -(void)timerStart
@@ -251,11 +231,13 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 // 画面遷移が行われる度に呼び出されるメソッド
 - (void) prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
 {
+    NSLog(@"images:%d",[images count]);
+    
     if ([segue.identifier isEqualToString:@"mySegue"])
     {
         SecondViewController *viewCon = segue.destinationViewController;
         viewCon.images = images;
-        viewCon.takephotoPortrait = takephotoPortrait;
+        viewCon.takephotoOrientation = takephotoOrientation;
     }
 }
 
@@ -263,17 +245,19 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 // 前ページに戻るためのメソッド
 -(IBAction)goback:(UIStoryboardSegue *)mySegue
 {
+    // imagesを初期化
+    [images removeAllObjects];
     
+    // countを初期化
+    _countLabel.text = @" ";
 }
 
-/*
+
 // 画面回転固定
 - (BOOL)shouldAutorotate
 {
-    return NO; // or NO
+    return NO;
 }
- */
-
 
 
 - (void)didReceiveMemoryWarning {

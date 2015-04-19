@@ -14,8 +14,6 @@
 - (IBAction)takeButton:(UIButton *)sender;
 @property (weak, nonatomic) IBOutlet UILabel *countLabel;
 - (IBAction)goback:(UIStoryboardSegue*)mySegue; // SecondViewControllerから戻るためのメソッド
-@property (weak, nonatomic) IBOutlet UIImageView *imageView;
-
 
 @end
 

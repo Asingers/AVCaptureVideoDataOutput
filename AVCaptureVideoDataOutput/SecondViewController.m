@@ -14,6 +14,8 @@
     UIPageControl * pageControl;
     NSMutableArray * images2;
     NSString * currentPage;
+    int angle;
+    int width, height;
 }
 
 
@@ -24,6 +26,7 @@
     // スライド生成
     [self slideSet];
 
+    NSLog(@"_images:%d",[_images count]);
 }
 
 
@@ -36,102 +39,40 @@
     // 既存のスクロールビューを削除
     [scrollView removeFromSuperview];
     
-    // 画面サイズ取得
-    CGRect rect = [[UIScreen mainScreen] bounds];
-    CGFloat screenWidth = rect.size.width;
-    CGFloat screenHeight = rect.size.height;
-    
-    // 画像サイズ取得
-    UIImage * image = _images[0];
-    CGFloat imageWidth = image.size.width;
-    CGFloat imageHeight = image.size.height;
-    
-    // スライド画像サイズ
-    CGFloat slideimageWidth;
-    CGFloat slideimageHeight;
-    
-    // スライド位置
-    CGFloat slideimageX;
-    CGFloat slideimageY;
-    
-    // スライド回転角度
-    int slideimageAngle;
-    
-    // タテ画像の場合
-    if(imageHeight > imageWidth)
-    {
-        if(screenHeight > screenWidth)
-        {
-            slideimageWidth = screenWidth;
-            slideimageHeight = screenHeight;
-            slideimageX = 0;
-            slideimageY = 0;
-            slideimageAngle = 0;
-            
-        } else{
-            slideimageWidth = imageWidth*(screenHeight/imageHeight);
-            slideimageHeight = screenHeight;
-            slideimageX = screenWidth/2 - slideimageWidth/2;
-            slideimageY = 0;
-        }
-    }
-    
-    // ヨコ画像の場合
-    if(imageHeight < imageWidth)
-    {
-        if(screenHeight < screenWidth)
-        {
-            slideimageWidth = screenWidth;
-            slideimageHeight = screenHeight;
-            slideimageX = 0;
-            slideimageY = 0;
-            
-        } else{
-            slideimageWidth = screenWidth;
-            slideimageHeight = imageHeight*(screenHeight/imageHeight);
-            slideimageX = 0;
-            slideimageY = screenHeight/2 - slideimageHeight/2;;
-            
-        }
-    }
+    //最適なアングル、画像サイズを取得
+    [self getAngleSize];
     
     
-    // 画像にレイアウト情報追加
-    NSLog(@"takePhotoPortrait:%d",_takephotoPortrait);
-    
+    // 画像を回転リサイズしてarrayに挿入
     for(int i = 0; i < [_images count]; i++)
     {
-        // Landscapeモードで撮影されたものであれば画像回転
-        if(_takephotoPortrait == NO)
-        {
-            [self rotateImage:_images[i] angle:90];
-        }
+        // imageViewを生成
+        UIImageView* imageView =[[UIImageView alloc]init];
         
-        UIImageView* imageView =[[UIImageView alloc]initWithImage:_images[i]];
-        imageView.frame = CGRectMake(slideimageWidth*i, 0, slideimageWidth, slideimageHeight);
-        //imageView.frame = CGRectMake(screenWidth*i, 0, screenWidth, screenHeight);
+        // 画像を回転リサイズ
+        imageView.image = [self rotateImage:_images[i] angle:angle];
+        //imageView.image = _images[i];
         
-        //imageView.clipsToBounds = YES; //クリッピング
+        // 画像をリサイズ位置変更
+        imageView.frame = CGRectMake(width*i, 0, width, height);
+
         [images2 addObject:imageView];
     }
     
-    // UIScrollViewのインスタンス化
+    // UIScrollView生成
     scrollView = [[UIScrollView alloc]init];
-    scrollView.frame = CGRectMake(slideimageX, slideimageY, slideimageWidth, slideimageHeight);
+    scrollView.frame = CGRectMake(0,0,width,height); // サイズ指定
     
-    // 横スクロールのインジケータを非表示にする
-    scrollView.showsHorizontalScrollIndicator = NO;
+    [scrollView setContentSize:CGSizeMake(([images2 count] * width), height)]; // スクロールの範囲を設定
+    
+    scrollView.showsHorizontalScrollIndicator = NO; // 横スクロールのインジケータを非表示にする
     
     // ページングを有効にする
     scrollView.pagingEnabled = YES;
     scrollView.userInteractionEnabled = YES;
     _imageView.userInteractionEnabled = YES;
     
-    // デリゲートを設定
-    scrollView.delegate = self;
-    
-    // スクロールの範囲を設定
-    [scrollView setContentSize:CGSizeMake(([images2 count] * slideimageWidth), slideimageHeight)];
+    scrollView.delegate = self;  // デリゲートを設定
     
     // スクロールビューを貼付ける
     [_imageView addSubview:scrollView];
@@ -179,39 +120,80 @@
 }
 
 
-// 端末回転時のスライド調整
--(void)didRotateFromInterfaceOrientation:(UIInterfaceOrientation)FromInterfaceOrientation {
-    if(FromInterfaceOrientation == UIInterfaceOrientationPortrait)
-    {
-        // 横向き
-        [self slideSet];
-    } else {
-        // 縦向き
-        [self slideSet];
+// 最適なアングルサイズ取得メソッド
+- (void)getAngleSize
+{
+    switch (_takephotoOrientation) {
+            
+        case UIDeviceOrientationPortrait:
+            // iPhoneを縦にして、ホームボタンが下にある状態
+            angle =  360;
+            width = self.view.bounds.size.width;
+            height = self.view.bounds.size.height;
+            break;
+            
+        case UIDeviceOrientationPortraitUpsideDown:
+            // iPhoneを縦にして、ホームボタンが上にある状態
+            break;
+            
+        case UIDeviceOrientationLandscapeLeft:
+            // iPhoneを横にして、ホームボタンが右にある状態
+            angle = 0;
+            width = self.view.bounds.size.height;
+            height = self.view.bounds.size.width;
+            break;
+            
+        case UIDeviceOrientationLandscapeRight:
+            // iPhoneを横にして、ホームボタンが左にある状態
+            angle = 180;
+            width = self.view.bounds.size.height;
+            height = self.view.bounds.size.width;
+            break;
+            
+        case UIDeviceOrientationFaceUp:
+            // iPhoneの液晶面を天に向けた状態
+            break;
+            
+        case UIDeviceOrientationFaceDown:
+            // iPhoneの液晶面を地に向けた状態
+            break;
+            
+        case UIDeviceOrientationUnknown:
+        default:
+            // 向きが分からない状態
+            break;
     }
 }
 
 
+
 // 画像回転メソッド
-- (UIImage*)rotateImage:(UIImage*)image angle:(int)angle
+- (UIImage*)rotateImage:(UIImage*)image angle:(int)myangle
 {
-    CGSize imgSize = {image.size.width, image.size.height};
-    UIGraphicsBeginImageContext(imgSize);
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    CGContextTranslateCTM(context, image.size.width/2, image.size.height/2); // 回転の中心点を移動
-    CGContextScaleCTM(context, 1.0, -1.0); // Y軸方向を補正
-    
-    float radian = angle * M_PI / 180; // 45°回転させたい場合
-    CGContextRotateCTM(context, radian);
-    CGContextDrawImage(UIGraphicsGetCurrentContext(), CGRectMake(-image.size.width/2, -image.size.height/2, image.size.width, image.size.height), image.CGImage);
-    
-    UIImage *rotatedImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    
-    return rotatedImage;
+    if(myangle != 360)
+    {
+        CGSize imgSize = {image.size.width, image.size.height};
+        UIGraphicsBeginImageContext(imgSize);
+        CGContextRef context = UIGraphicsGetCurrentContext();
+        CGContextTranslateCTM(context, image.size.width/2, image.size.height/2); // 回転の中心点を移動
+        CGContextScaleCTM(context, 1.0, -1.0); // Y軸方向を補正
+        
+        float radian = myangle * M_PI / 180; // 45°回転させたい場合
+        CGContextRotateCTM(context, radian);
+        CGContextDrawImage(UIGraphicsGetCurrentContext(), CGRectMake(-image.size.width/2, -image.size.height/2, image.size.width, image.size.height), image.CGImage);
+        
+        UIImage *rotatedImage = UIGraphicsGetImageFromCurrentImageContext();
+        UIGraphicsEndImageContext();
+        
+        // UIImageViewに回転後の画像を設定
+        UIImageView *imageView = [[UIImageView alloc] init];
+        imageView.image = rotatedImage;
+        
+        return rotatedImage;
+    }else{
+        return  image;
+    }
 }
-
-
 
 
 - (IBAction)saveButton:(UIBarButtonItem *)sender
@@ -237,6 +219,13 @@
                                           cancelButtonTitle: @"OK"
                                           otherButtonTitles: nil];
     [alert show];
+}
+
+
+// 画面回転固定
+- (BOOL)shouldAutorotate
+{
+    return NO;
 }
 
 
